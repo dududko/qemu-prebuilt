@@ -203,6 +203,12 @@ if [[ -n "${TARGET_LIST}" ]]; then
     configure_args+=("--target-list=${TARGET_LIST}")
 fi
 
+# QEMU 11.1's linux-user/mmap.c uses MADV_POPULATE_READ/WRITE (Linux 5.14), which musl's <sys/mman.h>
+# does not define yet. Give them their Linux UAPI values (asm-generic/mman-common.h) when musl lacks them.
+if ! grep -q MADV_POPULATE_READ /usr/include/sys/mman.h; then
+    configure_args+=("--extra-cflags=-DMADV_POPULATE_READ=22 -DMADV_POPULATE_WRITE=23")
+fi
+
 WORKDIR "/work/out/${QEMU_BASENAME}"
 RUN "/work/src/${QEMU_BASENAME}/configure" "${configure_args[@]}"
 
